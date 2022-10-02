@@ -1,0 +1,3 @@
+[submodule "libs/mach"]
+	path = libs/mach
+	url = https://github.com/hexops/mach.git
