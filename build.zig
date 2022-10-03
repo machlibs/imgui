@@ -61,9 +61,9 @@ pub fn build(b: *std.build.Builder) !void {
 	const run_cmd = try example_app.run();
 	run_cmd.dependOn(compile_step);
 
-	const run_step = b.step("run-" ++ name, "Run " ++ name);
-	run_step.dependOn(run_cmd);
-
 	const test_step = b.step("test", "Test");
 	test_step.dependOn(compile_step);
+
+	const run_step = b.step("run-" ++ name, "Run " ++ name);
+	run_step.dependOn(run_cmd);
 }
