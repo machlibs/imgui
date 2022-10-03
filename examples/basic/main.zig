@@ -38,7 +38,6 @@ fn create_color_target_state(swap_chain_format: gpu.Texture.Format) gpu.ColorTar
 }
 
 pub fn init(app: *App, core: *mach.Core) !void {
-	std.debug.print("init function called\n", .{});
 	std.debug.print("backend type: {?}\n", .{core.backend_type});
 	std.debug.print("\n", .{});
 

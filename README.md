@@ -1,6 +1,11 @@
 # mach/imgui - imgui bindings for mach engine
 
-## Getting started
+### Running example
+
+To run example use:
+```sh
+zig build run-example-basic
+```
 
 ### Adding dependency
 
@@ -18,7 +23,7 @@ const imgui = @import("libs/imgui/build.zig");
 
 pub fn build(b: *Builder) void {
     ...
-    exe.addPackage(imgui.pkg);
+    exe.addPackage(imgui.getPkg(&[_]std.build.Pkg{}));
     imgui.link(b, exe, .{});
 }
 ```
