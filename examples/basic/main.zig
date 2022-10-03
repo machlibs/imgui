@@ -42,12 +42,9 @@ pub fn init(app: *App, core: *mach.Core) !void {
 	std.debug.print("\n", .{});
 
 	try core.setOptions(mach.Options{
-		.title = "mach test",
+		.title = "Imgui in mach",
 		.width = 1000,
 		.height = 800,
-		.headless = true,
-		.size_min = .{ .width = 1000, .height = 800 },
-		.size_max = .{ .width = 1000, .height = 800 },
 	});
 
 	mach_imgui.init();
