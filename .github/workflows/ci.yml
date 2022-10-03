@@ -18,6 +18,8 @@ jobs:
           sudo sh -c 'wget -c https://ziglang.org/builds/zig-linux-x86_64-0.10.0-dev.4060+61aaef0b0.tar.xz -O - | tar -xJ --strip-components=1 -C /usr/local/bin'
       - name: x86_64-linux -> aarch64-macos
         run: zig build test -Dtarget=aarch64-macos.12-none
+        env:
+          AGREE: true
       - name: launch xvfb
         run: Xvfb :99 -screen 0 1680x720x24 > /dev/null 2>&1 &
       - name: test
