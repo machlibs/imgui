@@ -51,7 +51,7 @@ pub fn init(app: *App, core: *mach.Core) !void {
 
 	const scale_factor = 1;
 	const font_size = 26.0 * scale_factor;
-	const font_normal = mach_imgui.io.addFontFromFile("resources/Roboto-Medium.ttf", font_size);
+	const font_normal = mach_imgui.io.addFontFromFile("examples/resources/Roboto-Medium.ttf", font_size);
 
 	const fs_module = core.device.createShaderModuleWGSL("vert.wgsl", @embedFile("./frag.wgsl"));
 	const vs_module = core.device.createShaderModuleWGSL("frag.wgsl", @embedFile("./vert.wgsl"));

@@ -10,7 +10,11 @@ pub fn getPkg(dependencies: []const Pkg) Pkg {
 }
 
 pub fn link(exe: *std.build.LibExeObjStep) void {
+
+	exe.addIncludePath(thisDir() ++ "/src");
     exe.addCSourceFile(thisDir() ++ "/src/zgui.cpp", &.{""});
+	exe.addCSourceFile(thisDir() ++ "/src/imgui_c_keys.h", &.{""});
+	
     exe.addIncludePath(thisDir() ++ "/libs");
 
     exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui.cpp", &.{""});
@@ -24,7 +28,6 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
     exe.addCSourceFile(thisDir() ++ "/libs/imgui/implot.cpp", &.{""});
     exe.addCSourceFile(thisDir() ++ "/libs/imgui/implot_items.cpp", &.{""});
 
-	exe.addCSourceFile(thisDir() ++ "/src/imgui_c_keys.h", &.{""});
 }
 
 inline fn thisDir() []const u8 {
