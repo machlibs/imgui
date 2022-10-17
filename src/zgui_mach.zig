@@ -3,7 +3,7 @@ const zgui = @import("zgui.zig");
 const mach = @import("mach");
 
 pub const c = @cImport({
-	@cInclude("imgui/imgui_c_keys.h");
+	@cInclude("imgui_c_keys.h");
 });
 
 pub fn machKeyToImgui(key: mach.Key) u32 {

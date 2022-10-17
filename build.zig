@@ -23,6 +23,8 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
     exe.addCSourceFile(thisDir() ++ "/libs/imgui/implot_demo.cpp", &.{""});
     exe.addCSourceFile(thisDir() ++ "/libs/imgui/implot.cpp", &.{""});
     exe.addCSourceFile(thisDir() ++ "/libs/imgui/implot_items.cpp", &.{""});
+
+	exe.addCSourceFile(thisDir() ++ "/src/imgui_c_keys.h", &.{""});
 }
 
 inline fn thisDir() []const u8 {
@@ -36,7 +38,7 @@ pub fn build(b: *std.build.Builder) !void {
 	const mode = b.standardReleaseOptions();
 
 	const name = "example-basic";
-	const mach = @import("libs/mach/build.zig");
+	const mach = @import("examples/libs/mach/build.zig");
 
 	const mach_imgui_pkg = getPkg(&[_]Pkg{mach.pkg});
 
