@@ -12,7 +12,6 @@ pub fn getPkg(dependencies: []const Pkg) Pkg {
 pub fn link(exe: *std.build.LibExeObjStep) void {
     exe.addIncludePath(thisDir() ++ "/src");
     exe.addCSourceFile(thisDir() ++ "/src/zgui.cpp", &.{""});
-    exe.addCSourceFile(thisDir() ++ "/src/imgui_c_keys.h", &.{""});
 
     exe.addIncludePath(thisDir() ++ "/libs");
 
