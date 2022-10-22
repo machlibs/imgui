@@ -63,11 +63,18 @@ pub fn deinit() void {
     ImGui_ImplWGPU_Shutdown();
 }
 
-pub fn newFrame(fb_width: u32, fb_height: u32) void {
+pub fn newFrame(core: *mach.Core, fb_width: u32, fb_height: u32) void {
     ImGui_ImplWGPU_NewFrame();
 
     zgui.io.setDisplaySize(@intToFloat(f32, fb_width), @intToFloat(f32, fb_height));
-    zgui.io.setDisplayFramebufferScale(2.0, 2.0);
+
+    const window_size = core.getWindowSize();
+    const fb_size = core.getFramebufferSize();
+    zgui.io.setDisplayFramebufferScale(
+        @intToFloat(f32, window_size.width) / @intToFloat(f32, fb_size.width),
+        @intToFloat(f32, window_size.height) / @intToFloat(f32, fb_size.height),
+    );
+
     zgui.newFrame();
 }
 

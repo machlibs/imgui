@@ -4,6 +4,7 @@ const zgui = @import("mach-imgui");
 pub fn render_content(core: *mach.Core) !void {
     const window_size = core.getWindowSize();
     zgui.backend.newFrame(
+        core,
         window_size.width,
         window_size.height,
     );
