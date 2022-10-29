@@ -1,9 +1,15 @@
-# mach/imgui - dear imgui bindings for mach engine
+# mach/imgui - dear imgui bindings for [Mach engine](https://machengine.org)
 
-### Running example
+This repository contains community-maintained Dear Imgui bindings for [Mach engine](https://machengine.org) (originally based on zgui). Works on Windows, Linux, and macOS with zero-fuss cross-compilation & more.
 
-To run example use:
+<img height="400px" src="https://user-images.githubusercontent.com/3173176/198845698-4969dcdf-32ef-4cf0-968c-88ffd5a7cff1.png"></img>
+<img height="400px" src="https://user-images.githubusercontent.com/3173176/198846123-b9f55d0d-af4f-4770-ab73-88546f1e458b.png"></img>
+
+### Running the example
+
 ```sh
+git clone --recursive https://github.com/machlibs/imgui
+cd imgui/
 zig build run-example-basic
 ```
 
@@ -12,7 +18,7 @@ zig build run-example-basic
 In a `libs` subdirectory of the root of your project:
 
 ```sh
-git clone https://github.com/machlibs/imgui
+git clone --recursive https://github.com/machlibs/imgui
 ```
 
 Then in your `build.zig` add:
