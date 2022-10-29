@@ -2,8 +2,8 @@
 
 This repository contains community-maintained Dear Imgui bindings for [Mach engine](https://machengine.org). Works on Windows, Linux, and macOS with zero-fuss cross-compilation & more.
 
-<img height="350px" src="https://user-images.githubusercontent.com/3173176/198845698-4969dcdf-32ef-4cf0-968c-88ffd5a7cff1.png"></img>
-<img height="350px" src="https://user-images.githubusercontent.com/3173176/198846123-b9f55d0d-af4f-4770-ab73-88546f1e458b.png"></img>
+<img height="300px" src="https://user-images.githubusercontent.com/3173176/198845698-4969dcdf-32ef-4cf0-968c-88ffd5a7cff1.png"></img>
+<img height="300px" src="https://user-images.githubusercontent.com/3173176/198846123-b9f55d0d-af4f-4770-ab73-88546f1e458b.png"></img>
 
 ### Running the example
 
