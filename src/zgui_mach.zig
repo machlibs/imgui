@@ -70,9 +70,10 @@ pub fn newFrame(core: *mach.Core, fb_width: u32, fb_height: u32) void {
 
     const window_size = core.getWindowSize();
     const fb_size = core.getFramebufferSize();
+
     zgui.io.setDisplayFramebufferScale(
-        @intToFloat(f32, window_size.width) / @intToFloat(f32, fb_size.width),
-        @intToFloat(f32, window_size.height) / @intToFloat(f32, fb_size.height),
+        @intToFloat(f32, fb_size.width) / @intToFloat(f32, window_size.width),
+        @intToFloat(f32, fb_size.height) / @intToFloat(f32, window_size.height)
     );
 
     zgui.newFrame();
