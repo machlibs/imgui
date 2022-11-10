@@ -49,10 +49,10 @@ pub fn init(app: *App, core: *mach.Core) !void {
     mach_imgui.init();
 
     const scale_factor = scale_factor: {
-		const window_size = core.getWindowSize();
-		const fb_size = core.getFramebufferSize();
+        const window_size = core.getWindowSize();
+        const fb_size = core.getFramebufferSize();
         const scaleX = @intToFloat(f32, fb_size.width) / @intToFloat(f32, window_size.width);
-		const scaleY = @intToFloat(f32, fb_size.height) / @intToFloat(f32, window_size.height);
+        const scaleY = @intToFloat(f32, fb_size.height) / @intToFloat(f32, window_size.height);
 
         break :scale_factor std.math.max(scaleX, scaleY);
     };
