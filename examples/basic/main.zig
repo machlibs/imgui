@@ -48,16 +48,7 @@ pub fn init(app: *App, core: *mach.Core) !void {
 
     mach_imgui.init();
 
-    const scale_factor = scale_factor: {
-        const window_size = core.getWindowSize();
-        const fb_size = core.getFramebufferSize();
-        const scaleX = @intToFloat(f32, fb_size.width) / @intToFloat(f32, window_size.width);
-        const scaleY = @intToFloat(f32, fb_size.height) / @intToFloat(f32, window_size.height);
-
-        break :scale_factor std.math.max(scaleX, scaleY);
-    };
-
-    const font_size = 18.0 * scale_factor;
+    const font_size = 18.0;
     const font_normal = mach_imgui.io.addFontFromFile("examples/resources/Roboto-Medium.ttf", font_size);
 
     const fs_module = core.device.createShaderModuleWGSL("vert.wgsl", @embedFile("./frag.wgsl"));
@@ -74,7 +65,6 @@ pub fn init(app: *App, core: *mach.Core) !void {
     style.window_min_size = .{ 100.0, 100.0 };
     style.window_border_size = 8.0;
     style.scrollbar_size = 6.0;
-    style.scaleAllSizes(scale_factor);
 
     app.pipeline = core.device.createRenderPipeline(&pipeline_descriptor);
     app.queue = core.device.getQueue();
