@@ -6,6 +6,8 @@ pub const c = @cImport({
     @cInclude("imgui_c_keys.h");
 });
 
+const TextureFormat = mach.gpu.Texture.Format;
+
 pub fn machKeyToImgui(key: mach.Key) u32 {
     return switch (key) {
         .tab => c.ImGuiKey_Tab,
@@ -53,8 +55,9 @@ pub fn machKeyToImgui(key: mach.Key) u32 {
     };
 }
 
-pub fn init(wgpu_device: *const anyopaque, rt_format: u32) void {
-    if (!ImGui_ImplWGPU_Init(wgpu_device, 1, rt_format)) {
+pub fn init(wgpu_device: *const anyopaque, rt_format: TextureFormat, depth_format_opt: ?TextureFormat) void {
+    const depth_format = depth_format_opt orelse .undef;
+    if (!ImGui_ImplWGPU_Init(wgpu_device, 1, @enumToInt(rt_format), @enumToInt(depth_format))) {
         unreachable;
     }
 }
@@ -71,7 +74,10 @@ pub fn newFrame(core: *mach.Core, fb_width: u32, fb_height: u32) void {
     const window_size = core.getWindowSize();
     const fb_size = core.getFramebufferSize();
 
-    zgui.io.setDisplayFramebufferScale(@intToFloat(f32, fb_size.width) / @intToFloat(f32, window_size.width), @intToFloat(f32, fb_size.height) / @intToFloat(f32, window_size.height));
+    zgui.io.setDisplayFramebufferScale(
+        @intToFloat(f32, fb_size.width) / @intToFloat(f32, window_size.width),
+        @intToFloat(f32, fb_size.height) / @intToFloat(f32, window_size.height),
+    );
 
     zgui.newFrame();
 }
@@ -115,7 +121,7 @@ pub fn passEvent(event: mach.Event) void {
 }
 
 // Rendering
-extern fn ImGui_ImplWGPU_Init(device: *const anyopaque, num_frames_in_flight: u32, rt_format: u32) bool;
+extern fn ImGui_ImplWGPU_Init(device: *const anyopaque, num_frames_in_flight: i32, rt_format: u32, depth_format: u32) bool;
 extern fn ImGui_ImplWGPU_NewFrame() void;
 extern fn ImGui_ImplWGPU_RenderDrawData(draw_data: *const anyopaque, pass_encoder: *const anyopaque) void;
 extern fn ImGui_ImplWGPU_Shutdown() void;
