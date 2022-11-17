@@ -58,7 +58,7 @@ pub fn init(app: *App, core: *mach.Core) !void {
 
     const pipeline_descriptor = gpu.RenderPipeline.Descriptor{ .fragment = &create_fragment_state(fs_module, &.{color_target}), .vertex = create_vertex_state(vs_module) };
 
-    mach_imgui.backend.init(core.device, @enumToInt(core.swap_chain_format));
+    mach_imgui.backend.init(core.device, core.swap_chain_format, null);
     mach_imgui.io.setDefaultFont(font_normal);
 
     const style = mach_imgui.getStyle();
