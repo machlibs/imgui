@@ -10,13 +10,13 @@ This project is designed to integrate into an existing mach-based application. Y
 
 ## Project setup / integration
 
-### 1. Add Submodule
+### 1. Add submodule
 
 ```sh
 git clone https://github.com/machlibs/imgui libs/imgui
 ```
 
-### 2. Integrate Into build.zig
+### 2. Integrate into build.zig
 
 ```zig
 ...
@@ -29,11 +29,11 @@ pub fn build(b: *Builder) void {
 }
 ```
 
-### 3. Import & Use
+### 3. Import & use
 
-Mach/imgui depends on [mach](https://github.com/hexops/mach). This dependency is statisfied using a comptime injection instead of a redundant mach submodule. As a result, to gain access to the imgui interface you need construct the ```MachImgui``` type by passing the mach module.
+Mach/imgui depends on [mach](https://github.com/hexops/mach). This dependency is satisfied using a comptime injection instead of a redundant mach submodule. As a result, to gain access to the imgui interface you need construct the ```MachImgui``` type by passing the mach module.
 
-```
+```zig
     const std = @import("std");
     const mach_imgui = @import("mach-imgui");
     const mach = @import("mach");
@@ -41,14 +41,17 @@ Mach/imgui depends on [mach](https://github.com/hexops/mach). This dependency is
     const imgui = mach_imgui.MachImgui(mach);
 ```
 
-This exposes the dear imgui interface through the ```imgui``` namespace, which you can use as shown below.
+This exposes the dear imgui interface under the ```imgui``` namespace, which you can use as shown below.
 
 ```zig
     pub fn init(app: *App, core: *mach.Core) !void {
         imgui.init();
 
         const font_size = 18.0;
-        const font_normal = imgui.io.addFontFromFile("examples/resources/Roboto-Medium.ttf", font_size);
+        const font_normal = imgui.io.addFontFromFile(
+            "assets/font/Roboto-Medium.ttf", 
+            font_size
+        );
 
         imgui.backend.init(core.device, core.swap_chain_format, null);
         imgui.io.setDefaultFont(font_normal);
