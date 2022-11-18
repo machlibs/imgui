@@ -1,3 +1,0 @@
-[submodule "examples/libs/mach"]
-	path = examples/libs/mach
-	url = https://github.com/hexops/mach.git
