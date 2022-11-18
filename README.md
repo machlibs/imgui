@@ -34,11 +34,11 @@ pub fn build(b: *Builder) void {
 Mach/imgui depends on [mach](https://github.com/hexops/mach). This dependency is satisfied using a comptime injection instead of a redundant mach submodule. As a result, to gain access to the imgui interface you need construct the ```MachImgui``` type by passing the mach module.
 
 ```zig
-    const std = @import("std");
-    const mach_imgui = @import("mach-imgui");
-    const mach = @import("mach");
+const std = @import("std");
+const mach_imgui = @import("mach-imgui");
+const mach = @import("mach");
 
-    const imgui = mach_imgui.MachImgui(mach);
+const imgui = mach_imgui.MachImgui(mach);
 ```
 
 This exposes the dear imgui interface under the ```imgui``` namespace, which you can use as shown below.
