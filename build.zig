@@ -34,7 +34,7 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
     exe.addCSourceFile(this_dir ++ "/libs/imgui/implot.cpp", &.{""});
     exe.addCSourceFile(this_dir ++ "/libs/imgui/implot_items.cpp", &.{""});
 
-    exe.linkLibraryCpp();
+    exe.linkLibCpp();
 }
 
 pub fn build(b: *std.build.Builder) !void {
