@@ -56,7 +56,7 @@ pub fn MachBackend(comptime mach: anytype) type {
         }
 
         pub fn init(wgpu_device: *const anyopaque, rt_format: TextureFormat, depth_format_opt: ?TextureFormat) void {
-            const depth_format = depth_format_opt orelse .undef;
+            const depth_format = depth_format_opt orelse .undefined;
             if (!ImGui_ImplWGPU_Init(wgpu_device, 1, @enumToInt(rt_format), @enumToInt(depth_format))) {
                 unreachable;
             }
