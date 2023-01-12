@@ -8,7 +8,7 @@ pub const c = @cImport({
 pub fn MachBackend(comptime mach: anytype) type {
     return struct {
         const TextureFormat = mach.gpu.Texture.Format;
-        pub fn machKeyToImgui(key: mach.Key) u32 {
+        pub fn machKeyToImgui(key: mach.Core.Key) u32 {
             return switch (key) {
                 .tab => c.ImGuiKey_Tab,
                 .backspace => c.ImGuiKey_Backspace,
@@ -71,8 +71,8 @@ pub fn MachBackend(comptime mach: anytype) type {
 
             zgui.io.setDisplaySize(@intToFloat(f32, fb_width), @intToFloat(f32, fb_height));
 
-            const window_size = core.getWindowSize();
-            const fb_size = core.getFramebufferSize();
+            const window_size = core.size();
+            const fb_size = core.framebufferSize();
 
             zgui.io.setDisplayFramebufferScale(
                 @intToFloat(f32, fb_size.width) / @intToFloat(f32, window_size.width),
@@ -87,7 +87,7 @@ pub fn MachBackend(comptime mach: anytype) type {
             ImGui_ImplWGPU_RenderDrawData(zgui.getDrawData(), wgpu_render_pass);
         }
 
-        pub fn passEvent(event: mach.Event) void {
+        pub fn passEvent(event: mach.Core.Event) void {
             switch (event) {
                 .mouse_motion => {
                     const pos = event.mouse_motion.pos;
