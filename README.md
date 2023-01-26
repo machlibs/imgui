@@ -53,7 +53,7 @@ This exposes the dear imgui interface under the ```imgui``` namespace, which you
             font_size
         );
 
-        imgui.backend.init(core.device, core.swap_chain_format, null);
+        imgui.backend.init(core.device, core.descriptor().format, null);
         imgui.io.setDefaultFont(font_normal);
 
         const style = imgui.getStyle();
