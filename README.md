@@ -35,10 +35,8 @@ Mach/imgui depends on [mach](https://github.com/hexops/mach). This dependency is
 
 ```zig
 const std = @import("std");
-const mach_imgui = @import("mach-imgui");
 const mach = @import("mach");
-
-const imgui = mach_imgui.MachImgui(mach);
+const imgui = @import("imgui").MachImgui(mach);
 ```
 
 This exposes the dear imgui interface under the ```imgui``` namespace, which you can use as shown below.
@@ -83,7 +81,7 @@ This exposes the dear imgui interface under the ```imgui``` namespace, which you
 
 ## Join the community
 
-Join the Mach community [on Discord](https://discord.gg/XNG3NZgCqp) or [Matrix](https://matrix.to/#/#hexops:matrix.org) to discuss this project, ask questions, get help, etc.
+Join the Mach community [on Discord](https://discord.gg/XNG3NZgCqp) to discuss this project, ask questions, get help, etc.
 
 
 ## Description of files
