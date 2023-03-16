@@ -13,10 +13,9 @@
 
 // CHANGELOG
 // (minor and older changes stripped away, please see git history for details)
-//  2022-11-10: Fixed rendering when a depth buffer is enabled. Added 'WGPUTextureFormat depth_format' parameter to ImGui_ImplWGPU_Init().
-//  2022-10-11: Using 'nullptr' instead of 'NULL' as per our switch to C++11.
+//  2022-10-11: Using 'nullptr' instead of 'nullptr' as per our switch to C++11.
 //  2021-11-29: Passing explicit buffer sizes to wgpuRenderPassEncoderSetVertexBuffer()/wgpuRenderPassEncoderSetIndexBuffer().
-//  2021-08-24: Fixed for latest specs.
+//  2021-08-24: Fix for latest specs.
 //  2021-05-24: Add support for draw_data->FramebufferScale.
 //  2021-05-19: Replaced direct access to ImDrawCmd::TextureId with a call to ImDrawCmd::GetTexID(). (will become a requirement)
 //  2021-05-16: Update to latest WebGPU specs (compatible with Emscripten 2.0.20 and Chrome Canary 92).
@@ -24,18 +23,41 @@
 //  2021-01-28: Initial version.
 
 #include "imgui.h"
-#include "imgui_impl_wgpu.h"
 #include <limits.h>
 #include <webgpu/webgpu.h>
 
+#define HAS_EMSCRIPTEN_VERSION(major, minor, tiny) (__EMSCRIPTEN_major__ > (major) || (__EMSCRIPTEN_major__ == (major) && __EMSCRIPTEN_minor__ > (minor)) || (__EMSCRIPTEN_major__ == (major) && __EMSCRIPTEN_minor__ == (minor) && __EMSCRIPTEN_tiny__ >= (tiny)))
+
+#if defined(__EMSCRIPTEN__) && !HAS_EMSCRIPTEN_VERSION(2, 0, 20)
+#error "Requires at least emscripten 2.0.20"
+#endif
+
 // Dear ImGui prototypes from imgui_internal.h
 extern ImGuiID ImHashData(const void* data_p, size_t data_size, ImU32 seed = 0);
+
+// mziulek: We removed header file and declare all our external functions here.
+extern "C" {
+
+struct Config
+{
+    unsigned int pipeline_multisample_count;
+    unsigned int texture_filter_mode;
+};
+bool ImGui_ImplWGPU_Init(WGPUDevice device, int num_frames_in_flight, WGPUTextureFormat rt_format, const Config* config);
+void ImGui_ImplWGPU_Shutdown(void);
+void ImGui_ImplWGPU_NewFrame(void);
+void ImGui_ImplWGPU_RenderDrawData(ImDrawData* draw_data, WGPURenderPassEncoder pass_encoder);
+
+// Use if you want to reset your rendering device without losing Dear ImGui state.
+void ImGui_ImplWGPU_InvalidateDeviceObjects(void);
+bool ImGui_ImplWGPU_CreateDeviceObjects(void);
+
+} // extern "C"
 
 // WebGPU data
 static WGPUDevice               g_wgpuDevice = nullptr;
 static WGPUQueue                g_defaultQueue = nullptr;
 static WGPUTextureFormat        g_renderTargetFormat = WGPUTextureFormat_Undefined;
-static WGPUTextureFormat        g_depthStencilFormat = WGPUTextureFormat_Undefined;
 static WGPURenderPipeline       g_pipelineState = nullptr;
 
 struct RenderResources
@@ -68,6 +90,9 @@ struct Uniforms
 {
     float MVP[4][4];
 };
+
+
+static Config g_config;
 
 //-----------------------------------------------------------------------------
 // SHADERS
@@ -447,6 +472,12 @@ void ImGui_ImplWGPU_RenderDrawData(ImDrawData* draw_data, WGPURenderPassEncoder 
                 if (clip_max.x <= clip_min.x || clip_max.y <= clip_min.y)
                     continue;
 
+                // mziulek: Fixes 'Popups and Modal windows->Modals->Stacked modals..' from showDemoWindow().
+                if (clip_min.x < 0.0f) clip_min.x = 0.0f;
+                if (clip_min.y < 0.0f) clip_min.y = 0.0f;
+                if (clip_max.x > draw_data->DisplaySize.x) clip_max.x = draw_data->DisplaySize.x;
+                if (clip_max.y > draw_data->DisplaySize.y) clip_max.y = draw_data->DisplaySize.y;
+
                 // Apply scissor/clipping rectangle, Draw
                 wgpuRenderPassEncoderSetScissorRect(pass_encoder, (uint32_t)clip_min.x, (uint32_t)clip_min.y, (uint32_t)(clip_max.x - clip_min.x), (uint32_t)(clip_max.y - clip_min.y));
                 wgpuRenderPassEncoderDrawIndexed(pass_encoder, pcmd->ElemCount, 1, pcmd->IdxOffset + global_idx_offset, pcmd->VtxOffset + global_vtx_offset, 0);
@@ -508,10 +539,11 @@ static void ImGui_ImplWGPU_CreateFontsTexture()
     // Create the associated sampler
     // (Bilinear sampling is required by default. Set 'io.Fonts->Flags |= ImFontAtlasFlags_NoBakedLines' or 'style.AntiAliasedLinesUseTex = false' to allow point/nearest sampling)
     {
+        const WGPUFilterMode filter_mode = g_config.texture_filter_mode == 1 ? WGPUFilterMode_Linear : WGPUFilterMode_Nearest;
         WGPUSamplerDescriptor sampler_desc = {};
-        sampler_desc.minFilter = WGPUFilterMode_Linear;
-        sampler_desc.magFilter = WGPUFilterMode_Linear;
-        sampler_desc.mipmapFilter = WGPUFilterMode_Linear;
+        sampler_desc.minFilter = filter_mode;
+        sampler_desc.magFilter = filter_mode;
+        sampler_desc.mipmapFilter = filter_mode;
         sampler_desc.addressModeU = WGPUAddressMode_Repeat;
         sampler_desc.addressModeV = WGPUAddressMode_Repeat;
         sampler_desc.addressModeW = WGPUAddressMode_Repeat;
@@ -537,7 +569,7 @@ static void ImGui_ImplWGPU_CreateUniformBuffer()
     g_resources.Uniforms = wgpuDeviceCreateBuffer(g_wgpuDevice, &ub_desc);
 }
 
-bool ImGui_ImplWGPU_CreateDeviceObjects()
+bool ImGui_ImplWGPU_CreateDeviceObjects(void)
 {
     if (!g_wgpuDevice)
         return false;
@@ -550,7 +582,7 @@ bool ImGui_ImplWGPU_CreateDeviceObjects()
     graphics_pipeline_desc.primitive.stripIndexFormat = WGPUIndexFormat_Undefined;
     graphics_pipeline_desc.primitive.frontFace = WGPUFrontFace_CW;
     graphics_pipeline_desc.primitive.cullMode = WGPUCullMode_None;
-    graphics_pipeline_desc.multisample.count = 1;
+    graphics_pipeline_desc.multisample.count = g_config.pipeline_multisample_count;
     graphics_pipeline_desc.multisample.mask = UINT_MAX;
     graphics_pipeline_desc.multisample.alphaToCoverageEnabled = false;
     graphics_pipeline_desc.layout = nullptr; // Use automatic layout generation
@@ -604,14 +636,12 @@ bool ImGui_ImplWGPU_CreateDeviceObjects()
 
     // Create depth-stencil State
     WGPUDepthStencilState depth_stencil_state = {};
-    depth_stencil_state.format = g_depthStencilFormat;
-    depth_stencil_state.depthWriteEnabled = false;
-    depth_stencil_state.depthCompare = WGPUCompareFunction_Always;
-    depth_stencil_state.stencilFront.compare = WGPUCompareFunction_Always;
-    depth_stencil_state.stencilBack.compare = WGPUCompareFunction_Always;
+    depth_stencil_state.depthBias = 0;
+    depth_stencil_state.depthBiasClamp = 0;
+    depth_stencil_state.depthBiasSlopeScale = 0;
 
     // Configure disabled depth-stencil state
-    graphics_pipeline_desc.depthStencil = g_depthStencilFormat == WGPUTextureFormat_Undefined  ? nullptr :  &depth_stencil_state;
+    graphics_pipeline_desc.depthStencil = nullptr;
 
     g_pipelineState = wgpuDeviceCreateRenderPipeline(g_wgpuDevice, &graphics_pipeline_desc);
 
@@ -647,7 +677,7 @@ bool ImGui_ImplWGPU_CreateDeviceObjects()
     return true;
 }
 
-void ImGui_ImplWGPU_InvalidateDeviceObjects()
+void ImGui_ImplWGPU_InvalidateDeviceObjects(void)
 {
     if (!g_wgpuDevice)
         return;
@@ -662,8 +692,10 @@ void ImGui_ImplWGPU_InvalidateDeviceObjects()
         SafeRelease(g_pFrameResources[i]);
 }
 
-bool ImGui_ImplWGPU_Init(WGPUDevice device, int num_frames_in_flight, WGPUTextureFormat rt_format, WGPUTextureFormat depth_format)
+bool ImGui_ImplWGPU_Init(WGPUDevice device, int num_frames_in_flight, WGPUTextureFormat rt_format, const Config* config)
 {
+    g_config = *config;
+
     // Setup backend capabilities flags
     ImGuiIO& io = ImGui::GetIO();
     io.BackendRendererName = "imgui_impl_webgpu";
@@ -672,7 +704,6 @@ bool ImGui_ImplWGPU_Init(WGPUDevice device, int num_frames_in_flight, WGPUTextur
     g_wgpuDevice = device;
     g_defaultQueue = wgpuDeviceGetQueue(g_wgpuDevice);
     g_renderTargetFormat = rt_format;
-    g_depthStencilFormat = depth_format;
     g_pFrameResources = new FrameResources[num_frames_in_flight];
     g_numFramesInFlight = num_frames_in_flight;
     g_frameIndex = UINT_MAX;
@@ -701,8 +732,11 @@ bool ImGui_ImplWGPU_Init(WGPUDevice device, int num_frames_in_flight, WGPUTextur
     return true;
 }
 
-void ImGui_ImplWGPU_Shutdown()
+void ImGui_ImplWGPU_Shutdown(void)
 {
+    // mziulek: Explicitly release the memory reserved in ImGui_ImplWGPU_Init().
+    g_resources.ImageBindGroups.Clear();
+
     ImGui_ImplWGPU_InvalidateDeviceObjects();
     delete[] g_pFrameResources;
     g_pFrameResources = nullptr;
@@ -712,7 +746,7 @@ void ImGui_ImplWGPU_Shutdown()
     g_frameIndex = UINT_MAX;
 }
 
-void ImGui_ImplWGPU_NewFrame()
+void ImGui_ImplWGPU_NewFrame(void)
 {
     if (!g_pipelineState)
         ImGui_ImplWGPU_CreateDeviceObjects();

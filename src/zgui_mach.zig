@@ -55,9 +55,8 @@ pub fn MachBackend(comptime mach: anytype) type {
             };
         }
 
-        pub fn init(wgpu_device: *const anyopaque, rt_format: TextureFormat, depth_format_opt: ?TextureFormat) void {
-            const depth_format = depth_format_opt orelse .undefined;
-            if (!ImGui_ImplWGPU_Init(wgpu_device, 1, @enumToInt(rt_format), @enumToInt(depth_format))) {
+        pub fn init(wgpu_device: *const anyopaque, rt_format: TextureFormat, cfg: Config) void {
+            if (!ImGui_ImplWGPU_Init(wgpu_device, 1, @enumToInt(rt_format), &cfg)) {
                 unreachable;
             }
         }
@@ -123,10 +122,14 @@ pub fn MachBackend(comptime mach: anytype) type {
 }
 
 // Rendering
-extern fn ImGui_ImplWGPU_Init(device: *const anyopaque, num_frames_in_flight: i32, rt_format: u32, depth_format: u32) bool;
+pub const Config = extern struct {
+    pipeline_multisample_count: c_uint = 1,
+    texture_filter_mode: c_uint = 0, // gpu.FilterMode.nearest
+};
+extern fn ImGui_ImplWGPU_Init(device: *const anyopaque, num_frames_in_flight: c_int, rt_format: u32, config: *const Config) bool;
+extern fn ImGui_ImplWGPU_Shutdown() void;
 extern fn ImGui_ImplWGPU_NewFrame() void;
 extern fn ImGui_ImplWGPU_RenderDrawData(draw_data: *const anyopaque, pass_encoder: *const anyopaque) void;
-extern fn ImGui_ImplWGPU_Shutdown() void;
 
 // Input events
 extern fn ImGui_ImplMach_CursorPosCallback(x: f64, y: f64) void;

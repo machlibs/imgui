@@ -1,97 +1,154 @@
-# mach/imgui - dear imgui bindings for Mach
+## NOTE
 
-This repository contains community-maintained [Dear Imgui](https://github.com/ocornut/imgui) bindings for the [Mach engine](https://machengine.org).
+this is a fork of [zgui](https://github.com/michal-z/zig-gamedev/blob/main/libs/zgui) (dear imgui bindings) modified to support using  (the WebGPU API for Zig) instead of . You can find examples in [mach-examples](https://github.com/hexops/mach-examples)
+please don't create PRs for this repository
 
-This project is designed to integrate into an existing mach-based application. You can read [here](https://github.com/hexops/mach-examples#use-mach-engine-in-your-own-project) to learn how to create one.
+# zgui v0.9.6 - dear imgui (1.89.4) bindings
 
-<img height="300px" src="https://user-images.githubusercontent.com/3173176/198845698-4969dcdf-32ef-4cf0-968c-88ffd5a7cff1.png"></img>
-<img height="300px" src="https://user-images.githubusercontent.com/3173176/198846123-b9f55d0d-af4f-4770-ab73-88546f1e458b.png"></img>
+Easy to use, hand-crafted API with default arguments, named parameters and Zig style text formatting. For a test application please see [here](https://github.com/michal-z/zig-gamedev/tree/main/samples/gui_test_wgpu).
 
+## Features
 
-## Project setup / integration
+* Most public dear imgui API exposed
+* All memory allocations go through user provided Zig allocator
+* [DrawList API](#drawlist-api) for vector graphics, text rendering and custom widgets
+* [Plot API](#plot-api) for advanced data visualizations
 
-### 1. Add submodule
+## Getting started
 
-```sh
-git clone https://github.com/machlibs/imgui libs/imgui
+Copy `zgui` folder to a `libs` subdirectory of the root of your project.
+
+To get glfw/wgpu rendering backend working also copy `zgpu`, `zglfw` and `zpool` folders (see [zgpu](https://github.com/michal-z/zig-gamedev/tree/main/libs/zgpu) for the details). Alternatively, you can provide your own rendering backend, see: [backend_glfw_wgpu.zig](src/backend_glfw_wgpu.zig) for an example.
+
+Then in your `build.zig` add:
+```zig
+const zgui = @import("libs/zgui/build.zig");
+
+// Needed for glfw/wgpu rendering backend
+const zglfw = @import("libs/zglfw/build.zig");
+const zgpu = @import("libs/zgpu/build.zig");
+const zpool = @import("libs/zpool/build.zig");
+
+pub fn build(b: *std.Build) void {
+    ...
+    const zgui_pkg = zgui.Package.build(b, target, optimize, .{
+        .options = .{ .backend = .glfw_wgpu },
+    });
+
+    exe.addModule("zgui", zgui_pkg.zgui);
+
+    zgui_pkg.link(exe);
+    
+    // Needed for glfw/wgpu rendering backend
+    const zglfw_pkg = zglfw.Package.build(b, target, optimize, .{});
+    const zpool_pkg = zpool.Package.build(b, .{});
+    const zgpu_pkg = zgpu.Package.build(b, .{
+        .deps = .{ .zpool = zpool_pkg.zpool, .zglfw = zglfw_pkg.zglfw },
+    });
+
+    exe.addModule("zgpu", zgpu_pkg.zgpu);
+    exe.addModule("zglfw", zglfw_pkg.zglfw);
+
+    zglfw_pkg.link(exe);
+    zgpu_pkg.link(exe);
+}
+```
+Now in your code you may import and use `zgui`:
+```zig
+const zgui = @import("zgui");
+
+zgui.init(allocator);
+
+_ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", 16.0);
+
+zgui.backend.init(
+    window,
+    demo.gctx.device,
+    @enumToInt(swapchain_format),
+);
 ```
 
-### 2. Integrate into build.zig
-
 ```zig
-...
-const imgui = @import("libs/imgui/build.zig");
+// Main loop
+while (...) {
+    zgui.backend.newFrame(framebuffer_width, framebuffer_height);
 
-pub fn build(b: *Builder) void {
-    ...
-    exe.addPackage(imgui.getPkg(&[_]std.build.Pkg{}));
-    imgui.link(exe);
+    zgui.bulletText(
+        "Average :  {d:.3} ms/frame ({d:.1} fps)",
+        .{ demo.gctx.stats.average_cpu_time, demo.gctx.stats.fps },
+    );
+    zgui.bulletText("W, A, S, D :  move camera", .{});
+    zgui.spacing();
+
+    if (zgui.button("Setup Scene", .{})) {
+        // Button pressed.
+    }
+
+    if (zgui.dragFloat("Drag 1", .{ .v = &value0 })) {
+        // value0 has changed
+    }
+
+    if (zgui.dragFloat("Drag 2", .{ .v = &value0, .min = -1.0, .max = 1.0 })) {
+        // value1 has changed
+    }
+
+    // Setup wgpu render pass here
+
+    zgui.backend.draw(pass);
 }
 ```
 
-### 3. Import & use
+### Building a shared library
 
-Mach/imgui depends on [mach](https://github.com/hexops/mach). This dependency is satisfied using a comptime injection instead of a redundant mach submodule. As a result, to gain access to the imgui interface you need construct the ```MachImgui``` type by passing the mach module.
+If your project spans multiple zig modules that both use ImGui, such as an exe paired with a dll, you may want to build the `zgui` dependencies (`zgui_pkg.zgui_c_cpp`) as a shared library. This can be enabled with the `shared` build option. Then, in `build.zig`, use `zgui_pkg.link` to link `zgui` to all the modules that use ImGui.
 
+When built this way, the ImGui context will be located in the shared library. However, the `zgui` zig code (which is compiled separately into each module) requires its own memory buffer which has to be initialized separately with `initNoContext`.
+
+In your executable:
 ```zig
-const std = @import("std");
-const mach = @import("mach");
-const imgui = @import("imgui").MachImgui(mach);
+const zgui = @import("zgui");
+zgui.init(allocator);
+defer zgui.deinit();
 ```
 
-This exposes the dear imgui interface under the ```imgui``` namespace, which you can use as shown below.
-
+In your shared library:
 ```zig
-    pub fn init(app: *App, core: *mach.Core) !void {
-        imgui.init();
-
-        const font_size = 18.0;
-        const font_normal = imgui.io.addFontFromFile(
-            "assets/font/Roboto-Medium.ttf", 
-            font_size
-        );
-
-        imgui.backend.init(core.device, core.descriptor().format, null);
-        imgui.io.setDefaultFont(font_normal);
-
-        const style = imgui.getStyle();
-        style.window_min_size = .{ 100.0, 100.0 };
-        style.window_border_size = 8.0;
-        style.scrollbar_size = 6.0;
-    }
-
-    pub fn deinit(_: *App, _: *mach.Core) void {
-        imgui.backend.deinit();
-    }
-
-    pub fn update(app: *App, core: *mach.Core) !void {
-        if (core.hasEvent()) {
-            const input_event: mach.Event = core.pollEvent().?;
-            //
-            // Passing Mach event to Imgui
-            //
-            imgui.backend.passEvent(input_event);
-        }
-        ...
-    }
-
+const zgui = @import("zgui");
+zgui.initNoContext(allocator);
+defer zgui.deinitNoContxt();
 ```
 
-**NOTE**: Backend related events (Such as init, draw and passEvent) are further namespaced under imgui.backend.
+### DrawList API
 
-## Join the community
-
-Join the Mach community [on Discord](https://discord.gg/XNG3NZgCqp) to discuss this project, ask questions, get help, etc.
-
-
-## Description of files
-
-* imgui_c_keys.h - c header file with Imgui keys enum is used to map mach keys to imgui keys.
-* zgui_mach.zig - mach backend implementation for zgui
-* main.zig - main file that provides backend and imgui bindings (copied from zgui)
-* zgui.cpp and zgui.zig - imgui cpp bindings to zig functions (copied from zgui)
-
-## Credits
-
-* Based on michal-z's [zgui](https://github.com/michal-z/zig-gamedev/tree/main/libs/zgui)
-* Mach integration originally by @SergeiSomin
+```zig
+draw_list.addQuad(.{
+    .p1 = .{ 170, 420 },
+    .p2 = .{ 270, 420 },
+    .p3 = .{ 220, 520 },
+    .p4 = .{ 120, 520 },
+    .col = 0xff_00_00_ff,
+    .thickness = 3.0,
+});
+draw_list.addText(.{ 130, 130 }, 0xff_00_00_ff, "The number is: {}", .{7});
+draw_list.addCircleFilled(.{ .p = .{ 200, 600 }, .r = 50, .col = 0xff_ff_ff_ff });
+draw_list.addCircle(.{ .p = .{ 200, 600 }, .r = 30, .col = 0xff_00_00_ff, .thickness = 11 });
+draw_list.addPolyline(
+    &.{ .{ 100, 700 }, .{ 200, 600 }, .{ 300, 700 }, .{ 400, 600 } },
+    .{ .col = 0xff_00_aa_11, .thickness = 7 },
+);
+```
+### Plot API
+```zig
+if (zgui.plot.beginPlot("Line Plot", .{ .h = -1.0 })) {
+    zgui.plot.setupAxis(.x1, .{ .label = "xaxis" });
+    zgui.plot.setupAxisLimits(.x1, .{ .min = 0, .max = 5 });
+    zgui.plot.setupLegend(.{ .south = true, .west = true }, .{});
+    zgui.plot.setupFinish();
+    zgui.plot.plotLineValues("y data", i32, .{ .v = &.{ 0, 1, 0, 1, 0, 1 } });
+    zgui.plot.plotLine("xy data", f32, .{
+        .xv = &.{ 0.1, 0.2, 0.5, 2.5 },
+        .yv = &.{ 0.1, 0.3, 0.5, 0.9 },
+    });
+    zgui.plot.endPlot();
+}
+```

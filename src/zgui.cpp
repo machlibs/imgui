@@ -1,7 +1,11 @@
 #include "./imgui/imgui.h"
 #include "./imgui/implot.h"
 
-#define ZGUI_API extern "C"
+#ifndef ZGUI_API
+#define ZGUI_API
+#endif
+
+extern "C" {
 
 /*
 #include <stdio.h>
@@ -16,6 +20,13 @@ ZGUI_API float zguiGetFloatMax(void) {
     return __FLT_MAX__;
 }
 */
+
+ZGUI_API void zguiSetAllocatorFunctions(
+    void* (*alloc_func)(size_t, void*),
+    void (*free_func)(void*, void*)
+) {
+    ImGui::SetAllocatorFunctions(alloc_func, free_func, nullptr);
+}
 
 ZGUI_API void zguiSetNextWindowPos(float x, float y, ImGuiCond cond, float pivot_x, float pivot_y) {
     ImGui::SetNextWindowPos({ x, y }, cond, { pivot_x, pivot_y });
@@ -35,6 +46,10 @@ ZGUI_API void zguiSetNextWindowFocus(void) {
 
 ZGUI_API void zguiSetNextWindowBgAlpha(float alpha) {
     ImGui::SetNextWindowBgAlpha(alpha);
+}
+
+ZGUI_API void zguiSetKeyboardFocusHere(int offset) {
+    ImGui::SetKeyboardFocusHere(offset);
 }
 
 ZGUI_API bool zguiBegin(const char* name, bool* p_open, ImGuiWindowFlags flags) {
@@ -133,6 +148,16 @@ ZGUI_API float zguiGetWindowHeight(void) {
     return ImGui::GetWindowHeight();
 }
 
+ZGUI_API void zguiGetMouseDragDelta(ImGuiMouseButton button, float lock_threshold, float delta[2]) {
+    const ImVec2 d = ImGui::GetMouseDragDelta(button, lock_threshold);
+    delta[0] = d.x;
+    delta[1] = d.y;
+}
+
+ZGUI_API void zguiResetMouseDragDelta(ImGuiMouseButton button) {
+    ImGui::ResetMouseDragDelta(button);
+}
+
 ZGUI_API void zguiSpacing(void) {
     ImGui::Spacing();
 }
@@ -167,6 +192,18 @@ ZGUI_API void zguiBeginGroup(void) {
 
 ZGUI_API void zguiEndGroup(void) {
     ImGui::EndGroup();
+}
+
+ZGUI_API void zguiGetItemRectMax(float rect[2]) {
+    const ImVec2 r = ImGui::GetItemRectMax();
+    rect[0] = r.x;
+    rect[1] = r.y;
+}
+
+ZGUI_API void zguiGetItemRectMin(float rect[2]) {
+    const ImVec2 r = ImGui::GetItemRectMin();
+    rect[0] = r.x;
+    rect[1] = r.y;
 }
 
 ZGUI_API void zguiGetCursorPos(float pos[2]) {
@@ -209,6 +246,14 @@ ZGUI_API void zguiGetCursorScreenPos(float pos[2]) {
 
 ZGUI_API void zguiSetCursorScreenPos(float screen_x, float screen_y) {
     ImGui::SetCursorScreenPos({ screen_x, screen_y });
+}
+
+ZGUI_API int zguiGetMouseCursor(void) {
+    return ImGui::GetMouseCursor();
+}
+
+ZGUI_API void zguiSetMouseCursor(int cursor) {
+    ImGui::SetMouseCursor(cursor);
 }
 
 ZGUI_API void zguiAlignTextToFramePadding(void) {
@@ -867,21 +912,21 @@ ZGUI_API void zguiImage(
 }
 
 ZGUI_API bool zguiImageButton(
+    const char* str_id,
     ImTextureID user_texture_id,
     float w,
     float h,
     const float uv0[2],
     const float uv1[2],
-    int frame_padding,
     const float bg_col[4],
     const float tint_col[4]
 ) {
     return ImGui::ImageButton(
+        str_id,
         user_texture_id,
         { w, h },
         { uv0[0], uv0[1] },
         { uv1[0], uv1[1] },
-        frame_padding,
         { bg_col[0], bg_col[1], bg_col[2], bg_col[3] },
         { tint_col[0], tint_col[1], tint_col[2], tint_col[3] }
     );
@@ -999,12 +1044,22 @@ ZGUI_API void zguiSetNextItemWidth(float item_width) {
     ImGui::SetNextItemWidth(item_width);
 }
 
+ZGUI_API void zguiSetItemDefaultFocus(void) {
+    ImGui::SetItemDefaultFocus();
+}
+
 ZGUI_API ImFont* zguiGetFont(void) {
     return ImGui::GetFont();
 }
 
 ZGUI_API float zguiGetFontSize(void) {
     return ImGui::GetFontSize();
+}
+
+ZGUI_API void zguiGetFontTexUvWhitePixel(float uv[2]) {
+    const ImVec2 cs = ImGui::GetFontTexUvWhitePixel();
+    uv[0] = cs[0];
+    uv[1] = cs[1];
 }
 
 ZGUI_API void zguiPushFont(ImFont* font) {
@@ -1107,8 +1162,45 @@ ZGUI_API ImGuiID zguiGetPtrId(const void* ptr_id) {
     return ImGui::GetID(ptr_id);
 }
 
+ZGUI_API void zguiSetClipboardText(const char* text) {
+    ImGui::SetClipboardText(text);
+}
+
+ZGUI_API const char* zguiGetClipboardText(void) {
+    return ImGui::GetClipboardText();
+}
+
+ZGUI_API ImFont* zguiIoAddFontFromFileWithConfig(
+    const char* filename,
+    float size_pixels,
+    const ImFontConfig* config,
+    const ImWchar* ranges
+) {
+    return ImGui::GetIO().Fonts->AddFontFromFileTTF(filename, size_pixels, config, ranges);
+}
+
 ZGUI_API ImFont* zguiIoAddFontFromFile(const char* filename, float size_pixels) {
     return ImGui::GetIO().Fonts->AddFontFromFileTTF(filename, size_pixels, nullptr, nullptr);
+}
+
+ZGUI_API ImFont* zguiIoAddFontFromMemoryWithConfig(
+    void* font_data,
+    int font_size,
+    float size_pixels,
+    const ImFontConfig* config,
+    const ImWchar* ranges
+) {
+    return ImGui::GetIO().Fonts->AddFontFromMemoryTTF(font_data, font_size, size_pixels, config, ranges);
+}
+
+ZGUI_API ImFont* zguiIoAddFontFromMemory(void* font_data, int font_size, float size_pixels) {
+    ImFontConfig config = ImFontConfig();
+    config.FontDataOwnedByAtlas = false;
+    return ImGui::GetIO().Fonts->AddFontFromMemoryTTF(font_data, font_size, size_pixels, &config, nullptr);
+}
+
+ZGUI_API ImFontConfig zguiFontConfig_Init(void) {
+    return ImFontConfig();
 }
 
 ZGUI_API ImFont* zguiIoGetFont(unsigned int index) {
@@ -1117,6 +1209,23 @@ ZGUI_API ImFont* zguiIoGetFont(unsigned int index) {
 
 ZGUI_API void zguiIoSetDefaultFont(ImFont* font) {
     ImGui::GetIO().FontDefault = font;
+}
+
+ZGUI_API unsigned char *zguiIoGetFontsTexDataAsRgba32(int *width, int *height) {
+    unsigned char *font_pixels;
+    int font_width, font_height;
+    ImGui::GetIO().Fonts->GetTexDataAsRGBA32(&font_pixels, &font_width, &font_height);
+    *width = font_width;
+    *height = font_height;
+    return font_pixels;
+}
+
+ZGUI_API void zguiIoSetFontsTexId(ImTextureID id) {
+    ImGui::GetIO().Fonts->TexID = id;
+}
+
+ZGUI_API ImTextureID zguiIoGetFontsTexId(void) {
+    return ImGui::GetIO().Fonts->TexID;
 }
 
 ZGUI_API bool zguiIoGetWantCaptureMouse(void) {
@@ -1131,13 +1240,60 @@ ZGUI_API void zguiIoSetIniFilename(const char* filename) {
     ImGui::GetIO().IniFilename = filename;
 }
 
+ZGUI_API void zguiIoSetConfigFlags(ImGuiConfigFlags flags) {
+    ImGui::GetIO().ConfigFlags = flags;
+}
+
 ZGUI_API void zguiIoSetDisplaySize(float width, float height) {
     ImGui::GetIO().DisplaySize = { width, height };
+}
+
+ZGUI_API void zguiIoGetDisplaySize(float size[2]) {
+    const ImVec2 ds = ImGui::GetIO().DisplaySize;
+    size[0] = ds[0];
+    size[1] = ds[1];
 }
 
 ZGUI_API void zguiIoSetDisplayFramebufferScale(float sx, float sy) {
     ImGui::GetIO().DisplayFramebufferScale = { sx, sy };
 }
+
+ZGUI_API void zguiIoSetDeltaTime(float delta_time) {
+    ImGui::GetIO().DeltaTime = delta_time;
+}
+
+ZGUI_API void zguiIoAddFocusEvent(bool focused) {
+    ImGui::GetIO().AddFocusEvent(focused);
+}
+
+ZGUI_API void zguiIoAddMousePositionEvent(float x, float y) {
+    ImGui::GetIO().AddMousePosEvent(x, y);
+}
+
+ZGUI_API void zguiIoAddMouseButtonEvent(ImGuiMouseButton button, bool down) {
+    ImGui::GetIO().AddMouseButtonEvent(button, down);
+}
+
+ZGUI_API void zguiIoAddMouseWheelEvent(float x, float y) {
+    ImGui::GetIO().AddMouseWheelEvent(x, y);
+}
+
+ZGUI_API void zguiIoAddKeyEvent(ImGuiKey key, bool down) {
+    ImGui::GetIO().AddKeyEvent(key, down);
+}
+
+ZGUI_API void zguiIoAddInputCharactersUTF8(const char* utf8_chars) {
+    ImGui::GetIO().AddInputCharactersUTF8(utf8_chars);
+}
+
+ZGUI_API void zguiIoSetKeyEventNativeData(ImGuiKey key, int keycode, int scancode) {
+    ImGui::GetIO().SetKeyEventNativeData(key, keycode, scancode);
+}
+
+ZGUI_API void zguiIoAddCharacterEvent(int c) {
+    ImGui::GetIO().AddInputCharacter(c);
+}
+
 
 ZGUI_API bool zguiIsItemHovered(ImGuiHoveredFlags flags) {
     return ImGui::IsItemHovered(flags);
@@ -1153,6 +1309,10 @@ ZGUI_API bool zguiIsItemFocused(void) {
 
 ZGUI_API bool zguiIsItemClicked(ImGuiMouseButton mouse_button) {
     return ImGui::IsItemClicked(mouse_button);
+}
+
+ZGUI_API bool zguiIsMouseDoubleClicked(ImGuiMouseButton button) {
+    return ImGui::IsMouseDoubleClicked(button);
 }
 
 ZGUI_API bool zguiIsItemVisible(void) {
@@ -1197,16 +1357,38 @@ ZGUI_API void zguiGetContentRegionAvail(float pos[2]) {
     pos[1] = p.y;
 }
 
+ZGUI_API void zguiGetContentRegionMax(float pos[2]) {
+    const ImVec2 p = ImGui::GetContentRegionMax();
+    pos[0] = p.x;
+    pos[1] = p.y;
+}
+
+ZGUI_API void zguiGetWindowContentRegionMin(float pos[2]) {
+    const ImVec2 p = ImGui::GetWindowContentRegionMin();
+    pos[0] = p.x;
+    pos[1] = p.y;
+}
+
+ZGUI_API void zguiGetWindowContentRegionMax(float pos[2]) {
+    const ImVec2 p = ImGui::GetWindowContentRegionMax();
+    pos[0] = p.x;
+    pos[1] = p.y;
+}
+
 ZGUI_API void zguiPushTextWrapPos(float wrap_pos_x) {
     ImGui::PushTextWrapPos(wrap_pos_x);
 }
 
-ZGUI_API bool zguiBeginTabBar(const char* string) {
-    return ImGui::BeginTabBar(string, ImGuiTabBarFlags_None);
+ZGUI_API void zguiPopTextWrapPos(void) {
+    ImGui::PopTextWrapPos();
 }
 
-ZGUI_API bool zguiBeginTabItem(const char* string) {
-    return ImGui::BeginTabItem(string);
+ZGUI_API bool zguiBeginTabBar(const char* string, ImGuiTabBarFlags flags) {
+    return ImGui::BeginTabBar(string, flags);
+}
+
+ZGUI_API bool zguiBeginTabItem(const char* string, bool* p_open, ImGuiTabItemFlags flags) {
+    return ImGui::BeginTabItem(string, p_open, flags);
 }
 
 ZGUI_API void zguiEndTabItem(void) {
@@ -1216,21 +1398,247 @@ ZGUI_API void zguiEndTabItem(void) {
 ZGUI_API void zguiEndTabBar(void) {
     ImGui::EndTabBar();
 }
+
+ZGUI_API void zguiSetTabItemClosed(const char* tab_or_docked_window_label) {
+    ImGui::SetTabItemClosed(tab_or_docked_window_label);
+}
+
+ZGUI_API bool zguiBeginMenuBar(void) {
+    return ImGui::BeginMenuBar();
+}
+
+ZGUI_API void zguiEndMenuBar(void) {
+    ImGui::EndMenuBar();
+}
+
+ZGUI_API bool zguiBeginMainMenuBar(void) {
+    return ImGui::BeginMainMenuBar();
+}
+
+ZGUI_API void zguiEndMainMenuBar(void) {
+    ImGui::EndMainMenuBar();
+}
+
+ZGUI_API bool zguiBeginMenu(const char* label, bool enabled) {
+    return ImGui::BeginMenu(label, enabled);
+}
+
+ZGUI_API void zguiEndMenu(void) {
+    ImGui::EndMenu();
+}
+
+ZGUI_API bool zguiMenuItem(const char* label, const char* shortcut, bool selected, bool enabled) {
+    return ImGui::MenuItem(label, shortcut, selected, enabled);
+}
+
+ZGUI_API bool zguiMenuItemPtr(const char* label, const char* shortcut, bool* selected, bool enabled) {
+    return ImGui::MenuItem(label, shortcut, selected, enabled);
+}
+
+ZGUI_API bool zguiBeginTooltip(void) {
+    return ImGui::BeginTooltip();
+}
+
+ZGUI_API void zguiEndTooltip(void) {
+    ImGui::EndTooltip();
+}
+
+ZGUI_API bool zguiBeginPopupContextWindow(void) {
+    return ImGui::BeginPopupContextWindow();
+}
+
+ZGUI_API bool zguiBeginPopupContextItem(void) {
+    return ImGui::BeginPopupContextItem();
+}
+
+ZGUI_API bool zguiBeginPopupModal(const char* name, bool* p_open, ImGuiWindowFlags flags) {
+    return ImGui::BeginPopupModal(name, p_open, flags);
+}
+
+ZGUI_API void zguiEndPopup(void) {
+    ImGui::EndPopup();
+}
+
+ZGUI_API void zguiOpenPopup(const char* str_id, ImGuiPopupFlags popup_flags) {
+    ImGui::OpenPopup(str_id, popup_flags);
+}
+
+ZGUI_API void zguiCloseCurrentPopup(void) {
+    ImGui::CloseCurrentPopup();
+}
+//--------------------------------------------------------------------------------------------------
+//
+// Tables
+//
+//--------------------------------------------------------------------------------------------------
+ZGUI_API void zguiBeginTable(
+    const char* str_id,
+    int column,
+    ImGuiTableFlags flags,
+    const float outer_size[2],
+    float inner_width
+) {
+    ImGui::BeginTable(str_id, column, flags, { outer_size[0], outer_size[1] }, inner_width);
+}
+
+ZGUI_API void zguiEndTable(void) {
+    ImGui::EndTable();
+}
+
+ZGUI_API void zguiTableNextRow(ImGuiTableRowFlags row_flags, float min_row_height) {
+    ImGui::TableNextRow(row_flags, min_row_height);
+}
+
+ZGUI_API bool zguiTableNextColumn(void) {
+    return ImGui::TableNextColumn();
+}
+
+ZGUI_API bool zguiTableSetColumnIndex(int column_n) {
+    return ImGui::TableSetColumnIndex(column_n);
+}
+
+ZGUI_API void zguiTableSetupColumn(
+    const char* label,
+    ImGuiTableColumnFlags flags,
+    float init_width_or_height,
+    ImGuiID user_id
+) {
+    ImGui::TableSetupColumn(label, flags, init_width_or_height, user_id);
+}
+
+ZGUI_API void zguiTableSetupScrollFreeze(int cols, int rows) {
+    ImGui::TableSetupScrollFreeze(cols, rows);
+}
+
+ZGUI_API void zguiTableHeadersRow(void) {
+    ImGui::TableHeadersRow();
+}
+
+ZGUI_API void zguiTableHeader(const char* label) {
+    ImGui::TableHeader(label);
+}
+
+ZGUI_API ImGuiTableSortSpecs* zguiTableGetSortSpecs(void) {
+    return ImGui::TableGetSortSpecs();
+}
+
+ZGUI_API int zguiTableGetColumnCount(void) {
+    return ImGui::TableGetColumnCount();
+}
+
+ZGUI_API int zguiTableGetColumnIndex(void) {
+    return ImGui::TableGetColumnIndex();
+}
+
+ZGUI_API int zguiTableGetRowIndex(void) {
+    return ImGui::TableGetRowIndex();
+}
+
+ZGUI_API const char* zguiTableGetColumnName(int column_n) {
+    return ImGui::TableGetColumnName(column_n);
+}
+
+ZGUI_API ImGuiTableColumnFlags zguiTableGetColumnFlags(int column_n) {
+    return ImGui::TableGetColumnFlags(column_n);
+}
+
+ZGUI_API void zguiTableSetColumnEnabled(int column_n, bool v) {
+    ImGui::TableSetColumnEnabled(column_n, v);
+}
+
+ZGUI_API void zguiTableSetBgColor(ImGuiTableBgTarget target, unsigned int color, int column_n) {
+    ImGui::TableSetBgColor(target, color, column_n);
+}
+//--------------------------------------------------------------------------------------------------
+//
+// Color Utilities
+//
+//--------------------------------------------------------------------------------------------------
+ZGUI_API void zguiColorConvertU32ToFloat4(ImU32 in, float rgba[4]) {
+    const ImVec4 c = ImGui::ColorConvertU32ToFloat4(in);
+    rgba[0] = c.x;
+    rgba[1] = c.y;
+    rgba[2] = c.z;
+    rgba[3] = c.w;
+}
+
+ZGUI_API ImU32 zguiColorConvertFloat4ToU32(const float in[4]) {
+    return ImGui::ColorConvertFloat4ToU32({ in[0], in[1], in[2], in[3] });
+}
+
+ZGUI_API void zguiColorConvertRGBtoHSV(float r, float g, float b, float* out_h, float* out_s, float* out_v) {
+    return ImGui::ColorConvertRGBtoHSV(r, g, b, *out_h, *out_s, *out_v);
+}
+
+ZGUI_API void zguiColorConvertHSVtoRGB(float h, float s, float v, float* out_r, float* out_g, float* out_b) {
+    return ImGui::ColorConvertHSVtoRGB(h, s, v, *out_r, *out_g, *out_b);
+}
 //--------------------------------------------------------------------------------------------------
 //
 // DrawList
 //
 //--------------------------------------------------------------------------------------------------
-ZGUI_API ImDrawList* zguiGetWindowDrawList(void) {
+ZGUI_API ImDrawList *zguiGetWindowDrawList(void) {
     return ImGui::GetWindowDrawList();
 }
 
-ZGUI_API ImDrawList* zguiGetBackgroundDrawList(void) {
+ZGUI_API ImDrawList *zguiGetBackgroundDrawList(void) {
     return ImGui::GetBackgroundDrawList();
 }
 
-ZGUI_API ImDrawList* zguiGetForegroundDrawList(void) {
+ZGUI_API ImDrawList *zguiGetForegroundDrawList(void) {
     return ImGui::GetForegroundDrawList();
+}
+
+ZGUI_API ImDrawList *zguiCreateDrawList(void) {
+    return IM_NEW(ImDrawList)(ImGui::GetDrawListSharedData());
+}
+
+ZGUI_API void zguiDestroyDrawList(ImDrawList *draw_list) {
+  IM_DELETE(draw_list);
+}
+
+ZGUI_API const char *zguiDrawList_GetOwnerName(ImDrawList *draw_list) {
+    return draw_list->_OwnerName;
+}
+
+ZGUI_API void zguiDrawList_ResetForNewFrame(ImDrawList *draw_list) {
+    draw_list->_ResetForNewFrame();
+}
+
+ZGUI_API void zguiDrawList_ClearFreeMemory(ImDrawList *draw_list) {
+    draw_list->_ClearFreeMemory();
+}
+
+ZGUI_API int zguiDrawList_GetVertexBufferLength(ImDrawList *draw_list) {
+    return draw_list->VtxBuffer.size();
+}
+ZGUI_API ImDrawVert *zguiDrawList_GetVertexBufferData(ImDrawList *draw_list) {
+    return draw_list->VtxBuffer.begin();
+}
+
+ZGUI_API int zguiDrawList_GetIndexBufferLength(ImDrawList *draw_list) {
+    return draw_list->IdxBuffer.size();
+}
+ZGUI_API ImDrawIdx *zguiDrawList_GetIndexBufferData(ImDrawList *draw_list) {
+    return draw_list->IdxBuffer.begin();
+}
+ZGUI_API unsigned int zguiDrawList_GetCurrentIndex(ImDrawList *draw_list) {
+    return draw_list->_VtxCurrentIdx;
+}
+
+ZGUI_API int zguiDrawList_GetCmdBufferLength(ImDrawList *draw_list) {
+    return draw_list->CmdBuffer.size();
+}
+ZGUI_API ImDrawCmd *zguiDrawList_GetCmdBufferData(ImDrawList *draw_list) {
+    return draw_list->CmdBuffer.begin();
+}
+
+ZGUI_API void zguiDrawList_SetFlags(ImDrawList *draw_list, ImDrawListFlags flags) {
+    draw_list->Flags = flags;
+}
+ZGUI_API ImDrawListFlags zguiDrawList_GetFlags(ImDrawList *draw_list) {
+    return draw_list->Flags;
 }
 
 ZGUI_API void zguiDrawList_PushClipRect(
@@ -1609,6 +2017,66 @@ ZGUI_API void zguiDrawList_PathRect(
 ) {
     draw_list->PathRect({ rect_min[0], rect_min[1] }, { rect_max[0], rect_max[1] }, rounding, flags);
 }
+
+ZGUI_API void zguiDrawList_PrimReserve( ImDrawList* draw_list, int idx_count, int vtx_count) {
+    draw_list->PrimReserve(idx_count, vtx_count);
+}
+
+ZGUI_API void zguiDrawList_PrimUnreserve( ImDrawList* draw_list, int idx_count, int vtx_count) {
+    draw_list->PrimUnreserve(idx_count, vtx_count);
+}
+
+ZGUI_API void zguiDrawList_PrimRect(
+    ImDrawList* draw_list,
+    const float a[2],
+    const float b[2],
+    unsigned int col
+) {
+    draw_list->PrimRect({ a[0], a[1] }, { b[0], b[1] }, col);
+}
+
+ZGUI_API void zguiDrawList_PrimRectUV(
+    ImDrawList* draw_list,
+    const float a[2],
+    const float b[2],
+    const float uv_a[2],
+    const float uv_b[2],
+    unsigned int col
+) {
+    draw_list->PrimRectUV({ a[0], a[1] }, { b[0], b[1] }, { uv_a[0], uv_a[1] }, { uv_b[0], uv_b[1] }, col);
+}
+
+ZGUI_API void zguiDrawList_PrimQuadUV(
+    ImDrawList* draw_list,
+    const float a[2],
+    const float b[2],
+    const float c[2],
+    const float d[2],
+    const float uv_a[2],
+    const float uv_b[2],
+    const float uv_c[2],
+    const float uv_d[2],
+    unsigned int col
+) {
+    draw_list->PrimQuadUV(
+        { a[0], a[1] }, { b[0], b[1] }, { c[0], c[1] }, { d[0], d[1] },
+        { uv_a[0], uv_a[1] }, { uv_b[0], uv_b[1] }, { uv_c[0], uv_c[1] }, { uv_d[0], uv_d[1] },
+        col
+    );
+}
+
+ZGUI_API void zguiDrawList_PrimWriteVtx(
+    ImDrawList* draw_list,
+    const float pos[2],
+    const float uv[2],
+    unsigned int col
+) {
+    draw_list->PrimWriteVtx({ pos[0], pos[1] }, { uv[0], uv[1] }, col);
+}
+
+ZGUI_API void zguiDrawList_PrimWriteIdx( ImDrawList* draw_list, ImDrawIdx idx) {
+    draw_list->PrimWriteIdx(idx);
+}
 //--------------------------------------------------------------------------------------------------
 //
 // Viewport
@@ -1616,6 +2084,18 @@ ZGUI_API void zguiDrawList_PathRect(
 //--------------------------------------------------------------------------------------------------
 ZGUI_API ImGuiViewport* zguiGetMainViewport(void) {
     return ImGui::GetMainViewport();
+}
+
+ZGUI_API void zguiViewport_GetPos(ImGuiViewport* viewport, float p[2]) {
+    const ImVec2 pos = viewport->Pos;
+    p[0] = pos.x;
+    p[1] = pos.y;
+}
+
+ZGUI_API void zguiViewport_GetSize(ImGuiViewport* viewport, float p[2]) {
+    const ImVec2 sz = viewport->Size;
+    p[0] = sz.x;
+    p[1] = sz.y;
 }
 
 ZGUI_API void zguiViewport_GetWorkPos(ImGuiViewport* viewport, float p[2]) {
@@ -1646,138 +2126,186 @@ ZGUI_API ImPlotContext* zguiPlot_GetCurrentContext(void) {
     return ImPlot::GetCurrentContext();
 }
 
+ZGUI_API ImPlotStyle zguiPlotStyle_Init(void) {
+    return ImPlotStyle();
+}
+
+ZGUI_API ImPlotStyle* zguiPlot_GetStyle(void) {
+    return &ImPlot::GetStyle();
+}
+
+ZGUI_API void zguiPlot_PushStyleColor4f(ImPlotCol idx, const float col[4]) {
+    ImPlot::PushStyleColor(idx, { col[0], col[1], col[2], col[3] });
+}
+
+ZGUI_API void zguiPlot_PushStyleColor1u(ImPlotCol idx, unsigned int col) {
+    ImPlot::PushStyleColor(idx, col);
+}
+
+ZGUI_API void zguiPlot_PopStyleColor(int count) {
+    ImPlot::PopStyleColor(count);
+}
+
+ZGUI_API void zguiPlot_PushStyleVar1i(ImPlotStyleVar idx, int var) {
+    ImPlot::PushStyleVar(idx, var);
+}
+
+ZGUI_API void zguiPlot_PushStyleVar1f(ImPlotStyleVar idx, float var) {
+    ImPlot::PushStyleVar(idx, var);
+}
+
+ZGUI_API void zguiPlot_PushStyleVar2f(ImPlotStyleVar idx, const float var[2]) {
+    ImPlot::PushStyleVar(idx, { var[0], var[1] });
+}
+
+ZGUI_API void zguiPlot_PopStyleVar(int count) {
+    ImPlot::PopStyleVar(count);
+}
+
 ZGUI_API void zguiPlot_SetupLegend(ImPlotLocation location, ImPlotLegendFlags flags) {
     ImPlot::SetupLegend(location, flags);
 }
 
-ZGUI_API void zguiPlot_SetupXAxis(const char* label, ImPlotAxisFlags flags) {
-    ImPlot::SetupAxis(ImAxis_X1, label, flags);
+ZGUI_API void zguiPlot_SetupAxis(ImAxis axis, const char* label, ImPlotAxisFlags flags) {
+    ImPlot::SetupAxis(axis, label, flags);
 }
 
-ZGUI_API void zguiPlot_SetupYAxis(const char* label, ImPlotAxisFlags flags) {
-    ImPlot::SetupAxis(ImAxis_Y1, label, flags);
+ZGUI_API void zguiPlot_SetupAxisLimits(ImAxis axis, double v_min, double v_max, ImPlotCond cond) {
+    ImPlot::SetupAxisLimits(axis, v_min, v_max, cond);
+}
+
+ZGUI_API void zguiPlot_SetupFinish(void) {
+    ImPlot::SetupFinish();
 }
 
 ZGUI_API bool zguiPlot_BeginPlot(const char* title_id, float width, float height, ImPlotFlags flags) {
     return ImPlot::BeginPlot(title_id, { width, height }, flags);
 }
 
-ZGUI_API void zguiPlot_PlotLineValues(const char* label_id, const int* values, int count, ImPlotLineFlags flags) {
-    ImPlot::PlotLine(label_id, values, count, 1, 0, flags, 0, sizeof(int));
+ZGUI_API void zguiPlot_PlotLineValues(
+    const char* label_id,
+    ImGuiDataType data_type,
+    const void* values,
+    int count,
+    double xscale,
+    double x0,
+    ImPlotLineFlags flags,
+    int offset,
+    int stride
+) {
+    if (data_type == ImGuiDataType_S8)
+        ImPlot::PlotLine(label_id, (const ImS8*)values, count, xscale, x0, flags, offset, stride);
+    else if (data_type == ImGuiDataType_U8)
+        ImPlot::PlotLine(label_id, (const ImU8*)values, count, xscale, x0, flags, offset, stride);
+    else if (data_type == ImGuiDataType_S16)
+        ImPlot::PlotLine(label_id, (const ImS16*)values, count, xscale, x0, flags, offset, stride);
+    else if (data_type == ImGuiDataType_U16)
+        ImPlot::PlotLine(label_id, (const ImU16*)values, count, xscale, x0, flags, offset, stride);
+    else if (data_type == ImGuiDataType_S32)
+        ImPlot::PlotLine(label_id, (const ImS32*)values, count, xscale, x0, flags, offset, stride);
+    else if (data_type == ImGuiDataType_U32)
+        ImPlot::PlotLine(label_id, (const ImU32*)values, count, xscale, x0, flags, offset, stride);
+    else if (data_type == ImGuiDataType_Float)
+        ImPlot::PlotLine(label_id, (const float*)values, count, xscale, x0, flags, offset, stride);
+    else if (data_type == ImGuiDataType_Double)
+        ImPlot::PlotLine(label_id, (const double*)values, count, xscale, x0, flags, offset, stride);
+    else
+        assert(false);
+}
+
+ZGUI_API void zguiPlot_PlotLine(
+    const char* label_id,
+    ImGuiDataType data_type,
+    const void* xv,
+    const void* yv,
+    int count,
+    ImPlotLineFlags flags,
+    int offset,
+    int stride
+) {
+    if (data_type == ImGuiDataType_S8)
+        ImPlot::PlotLine(label_id, (const ImS8*)xv, (const ImS8*)yv, count, flags, offset, stride);
+    else if (data_type == ImGuiDataType_U8)
+        ImPlot::PlotLine(label_id, (const ImU8*)xv, (const ImU8*)yv, count, flags, offset, stride);
+    else if (data_type == ImGuiDataType_S16)
+        ImPlot::PlotLine(label_id, (const ImS16*)xv, (const ImS16*)yv, count, flags, offset, stride);
+    else if (data_type == ImGuiDataType_U16)
+        ImPlot::PlotLine(label_id, (const ImU16*)xv, (const ImU16*)yv, count, flags, offset, stride);
+    else if (data_type == ImGuiDataType_S32)
+        ImPlot::PlotLine(label_id, (const ImS32*)xv, (const ImS32*)yv, count, flags, offset, stride);
+    else if (data_type == ImGuiDataType_U32)
+        ImPlot::PlotLine(label_id, (const ImU32*)xv, (const ImU32*)yv, count, flags, offset, stride);
+    else if (data_type == ImGuiDataType_Float)
+        ImPlot::PlotLine(label_id, (const float*)xv, (const float*)yv, count, flags, offset, stride);
+    else if (data_type == ImGuiDataType_Double)
+        ImPlot::PlotLine(label_id, (const double*)xv, (const double*)yv, count, flags, offset, stride);
+    else
+        assert(false);
+}
+
+ZGUI_API void zguiPlot_PlotScatter(
+    const char* label_id,
+    ImGuiDataType data_type,
+    const void* xv,
+    const void* yv,
+    int count,
+    ImPlotScatterFlags flags,
+    int offset,
+    int stride
+) {
+    if (data_type == ImGuiDataType_S8)
+        ImPlot::PlotScatter(label_id, (const ImS8*)xv, (const ImS8*)yv, count, flags, offset, stride);
+    else if (data_type == ImGuiDataType_U8)
+        ImPlot::PlotScatter(label_id, (const ImU8*)xv, (const ImU8*)yv, count, flags, offset, stride);
+    else if (data_type == ImGuiDataType_S16)
+        ImPlot::PlotScatter(label_id, (const ImS16*)xv, (const ImS16*)yv, count, flags, offset, stride);
+    else if (data_type == ImGuiDataType_U16)
+        ImPlot::PlotScatter(label_id, (const ImU16*)xv, (const ImU16*)yv, count, flags, offset, stride);
+    else if (data_type == ImGuiDataType_S32)
+        ImPlot::PlotScatter(label_id, (const ImS32*)xv, (const ImS32*)yv, count, flags, offset, stride);
+    else if (data_type == ImGuiDataType_U32)
+        ImPlot::PlotScatter(label_id, (const ImU32*)xv, (const ImU32*)yv, count, flags, offset, stride);
+    else if (data_type == ImGuiDataType_Float)
+        ImPlot::PlotScatter(label_id, (const float*)xv, (const float*)yv, count, flags, offset, stride);
+    else if (data_type == ImGuiDataType_Double)
+        ImPlot::PlotScatter(label_id, (const double*)xv, (const double*)yv, count, flags, offset, stride);
+    else
+        assert(false);
+}
+
+ZGUI_API void zguiPlot_PlotScatterValues(
+    const char* label_id,
+    ImGuiDataType data_type,
+    const void* values,
+    int count,
+    double xscale,
+    double x0,
+    ImPlotScatterFlags flags,
+    int offset,
+    int stride
+) {
+    if (data_type == ImGuiDataType_S8)
+        ImPlot::PlotScatter(label_id, (const ImS8*)values, count, xscale, x0, flags, offset, stride);
+    else if (data_type == ImGuiDataType_U8)
+        ImPlot::PlotScatter(label_id, (const ImU8*)values, count, xscale, x0, flags, offset, stride);
+    else if (data_type == ImGuiDataType_S16)
+        ImPlot::PlotScatter(label_id, (const ImS16*)values, count, xscale, x0, flags, offset, stride);
+    else if (data_type == ImGuiDataType_U16)
+        ImPlot::PlotScatter(label_id, (const ImU16*)values, count, xscale, x0, flags, offset, stride);
+    else if (data_type == ImGuiDataType_S32)
+        ImPlot::PlotScatter(label_id, (const ImS32*)values, count, xscale, x0, flags, offset, stride);
+    else if (data_type == ImGuiDataType_U32)
+        ImPlot::PlotScatter(label_id, (const ImU32*)values, count, xscale, x0, flags, offset, stride);
+    else if (data_type == ImGuiDataType_Float)
+        ImPlot::PlotScatter(label_id, (const float*)values, count, xscale, x0, flags, offset, stride);
+    else if (data_type == ImGuiDataType_Double)
+        ImPlot::PlotScatter(label_id, (const double*)values, count, xscale, x0, flags, offset, stride);
+    else
+        assert(false);
 }
 
 ZGUI_API void zguiPlot_EndPlot(void) {
     ImPlot::EndPlot();
 }
 //--------------------------------------------------------------------------------------------------
-
-// enum I
-// {
-//     // Keyboard
-//     ImGuiKey_None = 0,
-//     ImGuiKey_Tab = 512,             // == ImGuiKey_NamedKey_BEGIN
-//     ImGuiKey_LeftArrow,
-//     ImGuiKey_RightArrow,
-//     ImGuiKey_UpArrow,
-//     ImGuiKey_DownArrow,
-//     ImGuiKey_PageUp,
-//     ImGuiKey_PageDown,
-//     ImGuiKey_Home,
-//     ImGuiKey_End,
-//     ImGuiKey_Insert,
-//     ImGuiKey_Delete,
-//     ImGuiKey_Backspace,
-//     ImGuiKey_Space,
-//     ImGuiKey_Enter,
-//     ImGuiKey_Escape,
-//     ImGuiKey_LeftCtrl, ImGuiKey_LeftShift, ImGuiKey_LeftAlt, ImGuiKey_LeftSuper,
-//     ImGuiKey_RightCtrl, ImGuiKey_RightShift, ImGuiKey_RightAlt, ImGuiKey_RightSuper,
-//     ImGuiKey_Menu,
-//     ImGuiKey_0, ImGuiKey_1, ImGuiKey_2, ImGuiKey_3, ImGuiKey_4, ImGuiKey_5, ImGuiKey_6, ImGuiKey_7, ImGuiKey_8, ImGuiKey_9,
-//     ImGuiKey_A, ImGuiKey_B, ImGuiKey_C, ImGuiKey_D, ImGuiKey_E, ImGuiKey_F, ImGuiKey_G, ImGuiKey_H, ImGuiKey_I, ImGuiKey_J,
-//     ImGuiKey_K, ImGuiKey_L, ImGuiKey_M, ImGuiKey_N, ImGuiKey_O, ImGuiKey_P, ImGuiKey_Q, ImGuiKey_R, ImGuiKey_S, ImGuiKey_T,
-//     ImGuiKey_U, ImGuiKey_V, ImGuiKey_W, ImGuiKey_X, ImGuiKey_Y, ImGuiKey_Z,
-//     ImGuiKey_F1, ImGuiKey_F2, ImGuiKey_F3, ImGuiKey_F4, ImGuiKey_F5, ImGuiKey_F6,
-//     ImGuiKey_F7, ImGuiKey_F8, ImGuiKey_F9, ImGuiKey_F10, ImGuiKey_F11, ImGuiKey_F12,
-//     ImGuiKey_Apostrophe,        // '
-//     ImGuiKey_Comma,             // ,
-//     ImGuiKey_Minus,             // -
-//     ImGuiKey_Period,            // .
-//     ImGuiKey_Slash,             // /
-//     ImGuiKey_Semicolon,         // ;
-//     ImGuiKey_Equal,             // =
-//     ImGuiKey_LeftBracket,       // [
-//     ImGuiKey_Backslash,         // \ (this text inhibit multiline comment caused by backslash)
-//     ImGuiKey_RightBracket,      // ]
-//     ImGuiKey_GraveAccent,       // `
-//     ImGuiKey_CapsLock,
-//     ImGuiKey_ScrollLock,
-//     ImGuiKey_NumLock,
-//     ImGuiKey_PrintScreen,
-//     ImGuiKey_Pause,
-//     ImGuiKey_Keypad0, ImGuiKey_Keypad1, ImGuiKey_Keypad2, ImGuiKey_Keypad3, ImGuiKey_Keypad4,
-//     ImGuiKey_Keypad5, ImGuiKey_Keypad6, ImGuiKey_Keypad7, ImGuiKey_Keypad8, ImGuiKey_Keypad9,
-//     ImGuiKey_KeypadDecimal,
-//     ImGuiKey_KeypadDivide,
-//     ImGuiKey_KeypadMultiply,
-//     ImGuiKey_KeypadSubtract,
-//     ImGuiKey_KeypadAdd,
-//     ImGuiKey_KeypadEnter,
-//     ImGuiKey_KeypadEqual,
-
-//     // Gamepad (some of those are analog values, 0.0f to 1.0f)                              // NAVIGATION action
-//     ImGuiKey_GamepadStart,          // Menu (Xbox)          + (Switch)   Start/Options (PS) // --
-//     ImGuiKey_GamepadBack,           // View (Xbox)          - (Switch)   Share (PS)         // --
-//     ImGuiKey_GamepadFaceUp,         // Y (Xbox)             X (Switch)   Triangle (PS)      // -> ImGuiNavInput_Input
-//     ImGuiKey_GamepadFaceDown,       // A (Xbox)             B (Switch)   Cross (PS)         // -> ImGuiNavInput_Activate
-//     ImGuiKey_GamepadFaceLeft,       // X (Xbox)             Y (Switch)   Square (PS)        // -> ImGuiNavInput_Menu
-//     ImGuiKey_GamepadFaceRight,      // B (Xbox)             A (Switch)   Circle (PS)        // -> ImGuiNavInput_Cancel
-//     ImGuiKey_GamepadDpadUp,         // D-pad Up                                             // -> ImGuiNavInput_DpadUp
-//     ImGuiKey_GamepadDpadDown,       // D-pad Down                                           // -> ImGuiNavInput_DpadDown
-//     ImGuiKey_GamepadDpadLeft,       // D-pad Left                                           // -> ImGuiNavInput_DpadLeft
-//     ImGuiKey_GamepadDpadRight,      // D-pad Right                                          // -> ImGuiNavInput_DpadRight
-//     ImGuiKey_GamepadL1,             // L Bumper (Xbox)      L (Switch)   L1 (PS)            // -> ImGuiNavInput_FocusPrev + ImGuiNavInput_TweakSlow
-//     ImGuiKey_GamepadR1,             // R Bumper (Xbox)      R (Switch)   R1 (PS)            // -> ImGuiNavInput_FocusNext + ImGuiNavInput_TweakFast
-//     ImGuiKey_GamepadL2,             // L Trigger (Xbox)     ZL (Switch)  L2 (PS) [Analog]
-//     ImGuiKey_GamepadR2,             // R Trigger (Xbox)     ZR (Switch)  R2 (PS) [Analog]
-//     ImGuiKey_GamepadL3,             // L Thumbstick (Xbox)  L3 (Switch)  L3 (PS)
-//     ImGuiKey_GamepadR3,             // R Thumbstick (Xbox)  R3 (Switch)  R3 (PS)
-//     ImGuiKey_GamepadLStickUp,       // [Analog]                                             // -> ImGuiNavInput_LStickUp
-//     ImGuiKey_GamepadLStickDown,     // [Analog]                                             // -> ImGuiNavInput_LStickDown
-//     ImGuiKey_GamepadLStickLeft,     // [Analog]                                             // -> ImGuiNavInput_LStickLeft
-//     ImGuiKey_GamepadLStickRight,    // [Analog]                                             // -> ImGuiNavInput_LStickRight
-//     ImGuiKey_GamepadRStickUp,       // [Analog]
-//     ImGuiKey_GamepadRStickDown,     // [Analog]
-//     ImGuiKey_GamepadRStickLeft,     // [Analog]
-//     ImGuiKey_GamepadRStickRight,    // [Analog]
-
-//     // Keyboard Modifiers (explicitly submitted by backend via AddKeyEvent() calls)
-//     // - This is mirroring the data also written to io.KeyCtrl, io.KeyShift, io.KeyAlt, io.KeySuper, in a format allowing
-//     //   them to be accessed via standard key API, allowing calls such as IsKeyPressed(), IsKeyReleased(), querying duration etc.
-//     // - Code polling every keys (e.g. an interface to detect a key press for input mapping) might want to ignore those
-//     //   and prefer using the real keys (e.g. ImGuiKey_LeftCtrl, ImGuiKey_RightCtrl instead of ImGuiKey_ModCtrl).
-//     // - In theory the value of keyboard modifiers should be roughly equivalent to a logical or of the equivalent left/right keys.
-//     //   In practice: it's complicated; mods are often provided from different sources. Keyboard layout, IME, sticky keys and
-//     //   backends tend to interfere and break that equivalence. The safer decision is to relay that ambiguity down to the end-user...
-//     ImGuiKey_ModCtrl, ImGuiKey_ModShift, ImGuiKey_ModAlt, ImGuiKey_ModSuper,
-
-//     // End of list
-//     ImGuiKey_COUNT,                 // No valid ImGuiKey is ever greater than this value
-
-//     // [Internal] Prior to 1.87 we required user to fill io.KeysDown[512] using their own native index + a io.KeyMap[] array.
-//     // We are ditching this method but keeping a legacy path for user code doing e.g. IsKeyPressed(MY_NATIVE_KEY_CODE)
-//     ImGuiKey_NamedKey_BEGIN         = 512,
-//     ImGuiKey_NamedKey_END           = ImGuiKey_COUNT,
-//     ImGuiKey_NamedKey_COUNT         = ImGuiKey_NamedKey_END - ImGuiKey_NamedKey_BEGIN,
-// #ifdef IMGUI_DISABLE_OBSOLETE_KEYIO
-//     ImGuiKey_KeysData_SIZE          = ImGuiKey_NamedKey_COUNT,          // Size of KeysData[]: only hold named keys
-//     ImGuiKey_KeysData_OFFSET        = ImGuiKey_NamedKey_BEGIN           // First key stored in io.KeysData[0]. Accesses to io.KeysData[] must use (key - ImGuiKey_KeysData_OFFSET).
-// #else
-//     ImGuiKey_KeysData_SIZE          = ImGuiKey_COUNT,                   // Size of KeysData[]: hold legacy 0..512 keycodes + named keys
-//     ImGuiKey_KeysData_OFFSET        = 0                                 // First key stored in io.KeysData[0]. Accesses to io.KeysData[] must use (key - ImGuiKey_KeysData_OFFSET).
-// #endif
-
-// #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-//     , ImGuiKey_KeyPadEnter = ImGuiKey_KeypadEnter   // Renamed in 1.87
-// #endif
-// };
+} /* extern "C" */
