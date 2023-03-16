@@ -125,6 +125,7 @@ pub fn MachBackend(comptime mach: anytype) type {
 pub const Config = extern struct {
     pipeline_multisample_count: c_uint = 1,
     texture_filter_mode: c_uint = 0, // gpu.FilterMode.nearest
+    depth_stencil_format: c_uint = 0,
 };
 extern fn ImGui_ImplWGPU_Init(device: *const anyopaque, num_frames_in_flight: c_int, rt_format: u32, config: *const Config) bool;
 extern fn ImGui_ImplWGPU_Shutdown() void;
