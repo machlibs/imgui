@@ -55,11 +55,13 @@ pub fn MachBackend(comptime mach: anytype) type {
             };
         }
 
-        pub fn init(wgpu_device: *const anyopaque, rt_format: TextureFormat, width: f32, height: f32, cfg: Config) void {
+        pub fn init(core: *mach.Core, wgpu_device: *const anyopaque, rt_format: TextureFormat, cfg: Config) void {
             if (!ImGui_ImplWGPU_Init(wgpu_device, 1, @enumToInt(rt_format), &cfg)) {
                 unreachable;
             }
-            zgui.io.setDisplaySize(width, height);
+
+            const size = core.size();
+            zgui.io.setDisplaySize(@intToFloat(f32, size.width), @intToFloat(f32, size.height));
         }
 
         pub fn deinit() void {
