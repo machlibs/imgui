@@ -55,28 +55,21 @@ pub fn MachBackend(comptime mach: anytype) type {
             };
         }
 
-        pub fn init(wgpu_device: *const anyopaque, rt_format: TextureFormat, cfg: Config) void {
+        pub fn init(core: *mach.Core, wgpu_device: *const anyopaque, rt_format: TextureFormat, cfg: Config) void {
             if (!ImGui_ImplWGPU_Init(wgpu_device, 1, @enumToInt(rt_format), &cfg)) {
                 unreachable;
             }
+
+            const size = core.size();
+            zgui.io.setDisplaySize(@intToFloat(f32, size.width), @intToFloat(f32, size.height));
         }
 
         pub fn deinit() void {
             ImGui_ImplWGPU_Shutdown();
         }
 
-        pub fn newFrame(core: *mach.Core, fb_width: u32, fb_height: u32) void {
+        pub fn newFrame() void {
             ImGui_ImplWGPU_NewFrame();
-
-            zgui.io.setDisplaySize(@intToFloat(f32, fb_width), @intToFloat(f32, fb_height));
-
-            const window_size = core.size();
-            const fb_size = core.framebufferSize();
-
-            zgui.io.setDisplayFramebufferScale(
-                @intToFloat(f32, fb_size.width) / @intToFloat(f32, window_size.width),
-                @intToFloat(f32, fb_size.height) / @intToFloat(f32, window_size.height),
-            );
 
             zgui.newFrame();
         }
@@ -114,6 +107,9 @@ pub fn MachBackend(comptime mach: anytype) type {
                 },
                 .char_input => {
                     ImGui_ImplMach_CharCallback(event.char_input.codepoint);
+                },
+                .framebuffer_resize => |ev| {
+                    zgui.io.setDisplaySize(@intToFloat(f32, ev.width), @intToFloat(f32, ev.height));
                 },
                 else => {},
             }
