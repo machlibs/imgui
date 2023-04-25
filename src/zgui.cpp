@@ -178,6 +178,10 @@ ZGUI_API void zguiSeparator(void) {
     ImGui::Separator();
 }
 
+ZGUI_API void zguiSeparatorText(const char* label) {
+    ImGui::SeparatorText(label);
+}
+
 ZGUI_API void zguiSameLine(float offset_from_start_x, float spacing) {
     ImGui::SameLine(offset_from_start_x, spacing);
 }
@@ -1575,6 +1579,14 @@ ZGUI_API void zguiColorConvertHSVtoRGB(float h, float s, float v, float* out_r, 
 }
 //--------------------------------------------------------------------------------------------------
 //
+// Inputs Utilities: Keyboard
+//
+//--------------------------------------------------------------------------------------------------
+ZGUI_API bool zguiIsKeyDown(ImGuiKey key) {
+    return ImGui::IsKeyDown(key);
+}
+//--------------------------------------------------------------------------------------------------
+//
 // DrawList
 //
 //--------------------------------------------------------------------------------------------------
@@ -2302,6 +2314,41 @@ ZGUI_API void zguiPlot_PlotScatterValues(
         ImPlot::PlotScatter(label_id, (const double*)values, count, xscale, x0, flags, offset, stride);
     else
         assert(false);
+}
+
+ZGUI_API void zguiPlot_PlotShaded(
+    const char* label_id,
+    ImGuiDataType data_type,
+    const void* xv,
+    const void* yv,
+    int count,
+    double yref,
+    ImPlotShadedFlags flags,
+    int offset,
+    int stride
+) {
+    if (data_type == ImGuiDataType_S8)
+        ImPlot::PlotShaded(label_id, (const ImS8*)xv, (const ImS8*)yv, count, yref, flags, offset, stride);
+    else if (data_type == ImGuiDataType_U8)
+        ImPlot::PlotShaded(label_id, (const ImU8*)xv, (const ImU8*)yv, count, yref, flags, offset, stride);
+    else if (data_type == ImGuiDataType_S16)
+        ImPlot::PlotShaded(label_id, (const ImS16*)xv, (const ImS16*)yv, count, yref, flags, offset, stride);
+    else if (data_type == ImGuiDataType_U16)
+        ImPlot::PlotShaded(label_id, (const ImU16*)xv, (const ImU16*)yv, count, yref, flags, offset, stride);
+    else if (data_type == ImGuiDataType_S32)
+        ImPlot::PlotShaded(label_id, (const ImS32*)xv, (const ImS32*)yv, count, yref, flags, offset, stride);
+    else if (data_type == ImGuiDataType_U32)
+        ImPlot::PlotShaded(label_id, (const ImU32*)xv, (const ImU32*)yv, count, yref, flags, offset, stride);
+    else if (data_type == ImGuiDataType_Float)
+        ImPlot::PlotShaded(label_id, (const float*)xv, (const float*)yv, count, yref, flags, offset, stride);
+    else if (data_type == ImGuiDataType_Double)
+        ImPlot::PlotShaded(label_id, (const double*)xv, (const double*)yv, count, yref, flags, offset, stride);
+    else
+        assert(false);
+}
+
+ZGUI_API void zguiPlot_ShowDemoWindow(bool* p_open) {
+    ImPlot::ShowDemoWindow(p_open);
 }
 
 ZGUI_API void zguiPlot_EndPlot(void) {
