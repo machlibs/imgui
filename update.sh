@@ -13,6 +13,7 @@ git checkout -- libs/imgui/imgui_impl_mach.cpp
 git checkout -- src/zgui_mach.zig
 mv src/main.zig src/zgui.zig
 git checkout -- src/main.zig
+git checkout -- src/imgui_c_keys.h
 
 echo -e "## NOTE\n
 this is a fork of ["zgui"](https://github.com/michal-z/zig-gamedev/blob/main/libs/zgui) (dear imgui bindings) modified to support using `mach/gpu` (the WebGPU API for Zig) instead of `zgpu`. You can find examples in [mach-examples](https://github.com/hexops/mach-examples)
