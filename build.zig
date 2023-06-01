@@ -24,6 +24,7 @@ pub fn Package(comptime deps: anytype) type {
             optimize: std.builtin.Mode,
             args: struct {
                 options: Options,
+                gpu_dawn_options: deps.gpu_dawn.Options,
             },
         ) !@This() {
             const step = b.addOptions();
@@ -87,7 +88,7 @@ pub fn Package(comptime deps: anytype) type {
                     // zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_glfw.cpp", cflags);
                     zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/backends/imgui_impl_wgpu.cpp", cflags);
                     zgui_c_cpp.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_mach.cpp", cflags);
-                    try deps.gpu_dawn.link(b, zgui_c_cpp, .{});
+                    try deps.gpu_dawn.link(b, zgui_c_cpp, args.gpu_dawn_options);
                 },
                 .glfw_wgpu => {
                     zgui_c_cpp.addIncludePath(thisDir() ++ "/../zglfw/libs/glfw/include");
